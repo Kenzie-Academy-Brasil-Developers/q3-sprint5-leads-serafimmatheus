@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from flask import current_app, jsonify, request
 from datetime import datetime
+from app.excs.excs import ValidadePhoneError
 from app.models.Leads_models import Leads
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import NotFound
@@ -10,13 +11,7 @@ import re
 def create_leads():
     data = request.get_json()
 
-    try:
-        if re.fullmatch("^\([1-9]{2}\)(?:[2-8]|9[1-9])[0-9]{3}\-[0-9]{4}$", data["phone"]):
-            data["phone"] = data["phone"]
-        else:
-            data["phone"] = None
-            return {"error": "Invalid number ex: (xx)xxxxx-xxxx"}, HTTPStatus.CONFLICT
-
+    try:       
         new_data = {
             "name": data["name"].title(),
             "email": data["email"].lower(),
@@ -47,6 +42,8 @@ def create_leads():
         return {"error": f"{e}"}, HTTPStatus.CONFLICT
     except AttributeError as e:
         return {"error": f"keys other than strings"}, HTTPStatus.CONFLICT
+    except ValidadePhoneError as e:
+        return {"error": "Invalid number ex: (xx)xxxxx-xxxx"}, HTTPStatus.CONFLICT
 
 def get_all_leads():
     lead = (
